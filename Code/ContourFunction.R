@@ -1,3 +1,5 @@
+
+##function to create a contour plot
 my.filled.contour<-function (x = seq(0, 1, length.out = nrow(z)), y = seq(0, 1, 
                                                        length.out = ncol(z)), z, xlim = range(x, finite = TRUE), 
           ylim = range(y, finite = TRUE), zlim = range(z, finite = TRUE), 
