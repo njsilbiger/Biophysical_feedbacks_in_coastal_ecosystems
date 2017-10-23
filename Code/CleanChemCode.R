@@ -736,7 +736,7 @@ Inverts<-37:ncol(TotalCover)
 #colors
 cols.all<-c(rep('red',15),rep('blue',15),rep('green',15),rep('magenta',15))
 # the community composition metric
-b<-CoverbyGroups$FleshyAlgae-CoverbyGroups$Inverts
+b<-CoverbyGroups$FleshyAlgae+CoverbyGroups$SurfGrass-CoverbyGroups$Inverts
 
 #PCA for physical variables
 x<-data.frame(scale(PData[,c('Perimeter','MaxDepth','SA','Vol','TidePercent','SAV')], scale= apply(PData[,c('Perimeter','MaxDepth','SA','Vol','TidePercent','SAV')], 2, sd, na.rm = TRUE), 
