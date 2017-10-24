@@ -226,23 +226,29 @@ time<-c(0:5)
 maxpH<-NA
 rangepH<-NA
 meanpH<-NA
+maxdiffpH<-NA # max difference between ocean and tide pool pH over the 24 hours cycle
 s<-c(0,15,30,45) #add to i for each site... number of pools
 for (j in 1:length(Sites)){
   for (i in 1:15){
     rangepH[i+s[j]]<-max(CData$pH[CData$Pool==i& CData$Site==Sites[j]], na.rm = TRUE)-min(CData$pH[CData$Pool==i& CData$Site==Sites[j]], na.rm = TRUE)
     maxpH[i+s[j]]<-max(CData$pH[CData$Pool==i& CData$Site==Sites[j]], na.rm = TRUE)
     meanpH[i+s[j]]<-mean(CData$pH[CData$Pool==i& CData$Site==Sites[j]], na.rm = TRUE)
+    maxdiffpH[i+s[j]]<-max(CData$pH[CData$Pool==i& CData$Site==Sites[j]] - CData$pH[CData$Pool=='Ocean' & CData$Site==Sites[j]], na.rm = TRUE)
   }
 }
 
 #calculate change in pH for day and night 
 pH.night.mean<-NA
 pH.day.mean<-NA
+pH.day.max<-NA # max difference between ocean and tide pool during day
+pH.night.max<-NA # max difference between ocean and tide pool during the night
 for (j in 1:length(Sites)){
   for (i in 1:15){
 
     for (k in 1:5){
       pH.day.mean[i+s[j]]<-mean(CData$pH[CData$Pool==i& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Day'], na.rm=TRUE)
+      pH.day.max[i+s[j]]<-max(CData$pH[CData$Pool==i& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Day'] -
+                                CData$pH[CData$Pool=='Ocean'& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Day'], na.rm=TRUE)
       
     }
   }
@@ -254,6 +260,9 @@ for (i in 1:15){ # loop through pools
   
   for (k in 1:4){ # loop through time points
     pH.night.mean[i+s[j]]<-mean(CData$pH[CData$Pool==i& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Night'], na.rm=TRUE)
+    pH.night.max[i+s[j]]<-max(CData$pH[CData$Pool==i& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Night'] -
+                                CData$pH[CData$Pool=='Ocean'& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Night'], na.rm=TRUE)
+    
     
   }
 }
@@ -261,13 +270,15 @@ for (j in c(1,2,4)){ # loop through sites
   for (i in 1:15){ # loop through pools
       for (k in 1:5){ # loop through time points
       pH.night.mean[i+s[j]]<-mean(CData$pH[CData$Pool==i& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Night'], na.rm=TRUE)
+      pH.night.max[i+s[j]]<-max(CData$pH[CData$Pool==i& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Night'] -
+                                  CData$pH[CData$Pool=='Ocean'& CData$Site==Sites[j] & CData$Time.pt==k & CData$Day.Night=='Night'], na.rm=TRUE)
       
     } 
   }
 }
 
 #create a dataframe with all the pH metrics
-pHmetrics<-data.frame(PData$Site, rangepH, maxpH, meanpH, pH.day.mean, pH.night.mean)
+pHmetrics<-data.frame(PData$Site, rangepH, maxpH, meanpH, pH.day.mean, pH.night.mean, maxdiffpH)
 colnames(pHmetrics)[1]<-'Site'
 
 #because monterey is missing two pools I need to convert the inf values to NA
@@ -704,9 +715,10 @@ Crust<- PercentTotal$NonCorallinecCust
 RockSand<- rowSums(PercentTotal[,c(which(Groups=='Rock'))])
 Inverts<-rowSums(PercentTotal[,c(which(Groups=='Invert' | Groups=='Small' | Groups=='Med'| Groups=='Star'| Groups=='Large'))])#sum across the invert rows for total % cover
 Fish<-rowSums(PercentTotal[,c(which(Groups=='Fish'))])
-
+Mussel<-PercentTotal$Mytilus
+OtherInverts<-Inverts-Mussel
 # group them into one data frame
-CoverbyGroups<-data.frame(Sessile$Site,RockSand,FleshyAlgae,CorallineAlgae,Crust,SurfGrass,Inverts,Fish)
+CoverbyGroups<-data.frame(Sessile$Site,RockSand,FleshyAlgae,CorallineAlgae,Crust,SurfGrass,Inverts,Fish, Mussel, OtherInverts)
 
 colnames(CoverbyGroups)[1]<-'Site'
 
@@ -718,7 +730,9 @@ Cover.mean <- ddply(CoverbyGroups, c("Site"), summarize,
                     Crust = mean(Crust, na.rm = T),
                     SurfGrass = mean(SurfGrass, na.rm = T),
                     Inverts = mean(Inverts, na.rm = T),
-                    Fish = mean(Fish, na.rm = T)
+                    Fish = mean(Fish, na.rm = T),
+                    Mussel = mean(Mussel, na.rm = T),
+                    OtherInvers = mean(OtherInverts, na.rm = T)
                     )
 rownames(Cover.mean)<- Cover.mean$Site
 Cover.mean<-Cover.mean[,-1]
@@ -999,9 +1013,9 @@ r.squaredGLMM(model3)
 #slopes versus range pH
 # for the effects function to work, everything needs to be in a clean dataframe
 NewD<-data.frame(PData$slopes.TADIC[!is.na(PData$slopes.TADIC)],pHmetrics$rangepH[!is.na(PData$slopes.TADIC)],
-                 pHmetrics$Site[!is.na(PData$slopes.TADIC)], b[!is.na(PData$slopes.TADIC)])
+                 pHmetrics$Site[!is.na(PData$slopes.TADIC)], b[!is.na(PData$slopes.TADIC)], pHmetrics$maxdiffpH[!is.na(PData$slopes.TADIC)])
 
-colnames(NewD)<-c('TADIC','pHRange','Site','b')
+colnames(NewD)<-c('TADIC','pHRange','Site','b','maxdiffpH')
 x<-PData$slopes.TADIC[!is.na(PData$slopes.TADIC)] #remove the missing data
 y<-pHmetrics$rangepH[!is.na(PData$slopes.TADIC)]
 plot(x,y, pch=19, ylab='Range pH', xlab='TA vs DIC slopes', cex=1.5, cex.axis=2, cex.lab=2,
@@ -1102,25 +1116,25 @@ points(ord$points[Sessile$Site=='Bodega',1],ord$points[Sessile$Site=='Bodega',2]
 points(ord$points[Sessile$Site=='BobCreek',1],ord$points[Sessile$Site=='BobCreek',2], pch=19, col='red', cex=2)
 points(ord$points[Sessile$Site=='CDM',1],ord$points[Sessile$Site=='CDM',2], pch=19, col='lightblue', cex=2)
 points(ord$points[Sessile$Site=='Monterey',1],ord$points[Sessile$Site=='Monterey',2], pch=19, col='#0606f7', cex=2)
-legend('topright',legend=c('Bob Creek','Bodega','Monterey','Corona del Mar'),
+legend('topright',legend=c('Bob Creek','Bodega Bay','Monterey Bay','Corona del Mar'),
        col=c('red','magenta','#0606f7','lightblue'), pch=19, bty='n', y.intersp = 1, x.intersp = 0.5, cex = 2)
 
 ## plot percent of pools by group for each site
 ##remove the site and square info from the groups and join them into one vector so its the same length as percent total
 
-bp<-barplot(t(Cover.mean)[1:6,c(3,4,2,1)], # remove the fish because they are barely there 
-            col=c('black','darkgreen','pink','brown','lightgreen','grey'),
+bp<-barplot(t(Cover.mean)[c(1:5,8,9),c(3,4,2,1)], # remove the fish because they are barely there 
+            col=c('black','darkgreen','pink','brown','lightgreen','gray38','grey'),
             ylab='',cex.axis =2,cex.names =2 , cex.lab=2, xaxt='n',
             xaxt='n', yaxt='n', bty='n', ylim=c(0,105))
 title(ylab = 'Precent Cover', line = 2.75, cex.lab=2)
 axis(1, bp, labels = FALSE, cex.axis=2)
 axis(2, c(0,50,100), cex.axis=2)
-text(bp-.2, par("usr")[3] - 8,  labels = c('CDM','Monterey','Bodega','Bob Creek'), srt = 45, cex=2, pos = 1, xpd = TRUE)
+text(bp-.2, par("usr")[3] - 8,  labels = c('Corona del Mar','Monterey Bay','Bodega Bay','Bob Creek'), srt = 45, cex=2, pos = 1, xpd = TRUE)
 # add the legend
 par(mar=c(5.1,0,4.1,1))
 plot(0, 0, type = "n", ann = F, axes = F)
-legend('left', legend = c('Invertebrates','Surf Grass','Non-coralline Crust', 'Coralline Crust','Fleshy Algae','Bare Rock'),
-       bty='n', pch=15, col=c('grey','lightgreen','brown','pink','darkgreen','black'),cex=2)
+legend('left', legend = c('Invertebrates','Mussels Only','Surf Grass','Non-coralline Crust', 'Coralline Crust','Fleshy Algae','Bare Rock'),
+       bty='n', pch=15, col=c('grey','grey38','lightgreen','brown','pink','darkgreen','black'),cex=2)
 
 
 #PCA for physical variables
@@ -1257,3 +1271,34 @@ r.squaredGLMM(NCPModel)
 
 dev.off()
 
+## community versus the max difference between tide pools and the ocean for supplement
+#community versus range
+pdf(file = '../Output/MaxDiff.pdf', height = 7.5, width = 7, useDingbats=FALSE)
+
+par(mar=c(5.1,7.1,4.1,2.1))
+y<- pHmetrics$maxdiffpH[!is.na(PData$slopes.TADIC)] #remove the missing data
+x<- CoverbyGroups$FleshyAlgae[!is.na(PData$slopes.TADIC)]+CoverbyGroups$SurfGrass[!is.na(PData$slopes.TADIC)] - 
+  CoverbyGroups$Inverts[!is.na(PData$slopes.TADIC)]
+
+plot(x,y, pch=19, xlab='', cex=1.5, cex.axis=1.5, cex.lab=1.5,
+     xlim=c(min(x, na.rm=T),max(x, na.rm=T)), col="grey", ylab = 'Max (Tide Pool - Ocean pH)')
+
+
+#axis(side=2, labels = FALSE) #add back tick marks
+abline(v=0, lty=2)
+abline(h=0, lty=2)
+
+model3<-lme(maxdiffpH~b, random = ~1|Site, data=NewD, na.action = na.exclude)
+
+# calculate 95% CI for the interaction terms
+ef<-effect(term = "b", mod = model3, xlevels = list(b = seq(min(NewD$b),max(NewD$b),.1)))
+ef2<-as.data.frame(ef)
+
+polygon(c(ef2$b, rev(ef2$b)),
+        c(ef2$upper, rev(ef2$lower)),
+        col = myGrey, border = NA)
+lines(ef2$b,ef2$fit, col='black', lwd=2)
+
+title(xlab = 'Producer Dominance', cex.lab = 1.5, line = 2.5)
+title(xlab = '% Producers - % Consumers', cex.lab = 1.5, line = 4)
+dev.off()
