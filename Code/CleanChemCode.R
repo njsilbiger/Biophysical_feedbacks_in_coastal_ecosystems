@@ -488,8 +488,38 @@ OceanDataMean<-ddply(CData, c("Site"), summarize,
                      OceanTA = mean(TA.NormSal[CData$Pool=='Ocean'], na.rm=TRUE)
 )
 
+# make all the data for pool 4 and 9 for monterey = NA and ocean time point 5 for CSM... the temperature data is still showing up even though it is not real (no temp data was taken)
+CData[CData$Site=='Monterey' & CData$Pool==4 | CData$Pool==9,'Temp.pool' ]<-NA
+CData[CData$Site=='CDM' & CData$Time.pt==5 & CData$Day.Night=='Night','Temp.pool' ]<-NA
+
+# ocean data range
+OceanDataRange<-ddply(CData, c("Site","Day.Night"), summarize,
+                     
+                     OceanMinpH = min(pH[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxpH = max(pH[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinTemp = min(Temp.pool[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxTemp = max(Temp.pool[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinNH4 = min(NH4[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxNH4 = max(NH4[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinNN = min(NN[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxNN = max(NN[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinPO = min(PO[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxPO = max(PO[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinDO = min(DO[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxDO = max(DO[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinArag = min(OmegaAragonite[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxArag = max(OmegaAragonite[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinpCO2 = min(pCO2insitu[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxpCO2 = max(pCO2insitu[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinDIC = min(DIC.Norm[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxDIC = max(DIC.Norm[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMinTA = min(TA.NormSal[CData$Pool=='Ocean'], na.rm=TRUE),
+                     OceanMaxTA = max(TA.NormSal[CData$Pool=='Ocean'], na.rm=TRUE)
+)
+
+
 # Pool ranges for table (excluding ocean sample)
-PoolDataRange<-ddply(CData, c("Site"), summarize,
+PoolDataRange<-ddply(CData, c("Site","Day.Night"), summarize,
                      pHmin = min(pH[CData$Pool!='Ocean'], na.rm=TRUE),
                      pHmax = max(pH[CData$Pool!='Ocean'], na.rm=TRUE),
                      Tempmin = min(Temp.pool[CData$Pool!='Ocean'], na.rm=TRUE),
@@ -1302,3 +1332,6 @@ lines(ef2$b,ef2$fit, col='black', lwd=2)
 title(xlab = 'Producer Dominance', cex.lab = 1.5, line = 2.5)
 title(xlab = '% Producers - % Consumers', cex.lab = 1.5, line = 4)
 dev.off()
+
+#chemistry ranges by day and night
+
