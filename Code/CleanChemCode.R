@@ -960,7 +960,7 @@ qqline(E2)
 dev.off()
 
 ### visualization of significant factors in mixed effects model for mean and range pH
-## Figure 3 ###
+## Figure 4 ###
 pdf(file = '../Output/MMESigSlopes.pdf', height = 11, width = 9, useDingbats=FALSE)
 par(mfrow=c(3,2), pty = "s", mai=c(.35,0.01,0.01,0.01))
 
@@ -1089,6 +1089,36 @@ title(xlab = expression(paste(Delta, ' Benthic Cover')), cex.lab = 2, line = 4)
 title(xlab = 'Producers - Invertebrates', cex.lab = 2, line = 2.5)
 
 
+## next cover versus pH divergence
+
+#par(mar=c(5.1,7.1,4.1,2.1))
+y<- pHmetrics$maxdiffpH[!is.na(PData$slopes.TADIC)] #remove the missing data
+x<- CoverbyGroups$FleshyAlgae[!is.na(PData$slopes.TADIC)]+CoverbyGroups$SurfGrass[!is.na(PData$slopes.TADIC)] - 
+  CoverbyGroups$Inverts[!is.na(PData$slopes.TADIC)]
+
+plot(x,y, pch=19, xlab='', cex=1.5, cex.axis=2, cex.lab=2,
+     xlim=c(min(x, na.rm=T),max(x, na.rm=T)), col="grey", ylab = 'Max (Tide Pool - Ocean pH)')
+
+
+#axis(side=2, labels = FALSE) #add back tick marks
+abline(v=0, lty=2)
+abline(h=0, lty=2)
+
+model3<-lme(maxdiffpH~b, random = ~1|Site, data=NewD, na.action = na.exclude)
+
+# calculate 95% CI for the interaction terms
+ef<-effect(term = "b", mod = model3, xlevels = list(b = seq(min(NewD$b),max(NewD$b),.1)))
+ef2<-as.data.frame(ef)
+
+polygon(c(ef2$b, rev(ef2$b)),
+        c(ef2$upper, rev(ef2$lower)),
+        col = myGrey, border = NA)
+lines(ef2$b,ef2$fit, col='black', lwd=2)
+
+title(xlab = 'Producer Dominance', cex.lab = 2, line = 2.5)
+title(xlab = '% Producers - % Consumers', cex.lab = 2, line = 4)
+
+
 #next cover versus slopes-----------------
 y<-PData$slopes.TADIC[!is.na(PData$slopes.TADIC)] #remove the missing data
 x<- CoverbyGroups$FleshyAlgae[!is.na(PData$slopes.TADIC)]+CoverbyGroups$SurfGrass[!is.na(PData$slopes.TADIC)] - 
@@ -1108,14 +1138,15 @@ polygon(c(ef2$b, rev(ef2$b)),
         c(ef2$upper, rev(ef2$lower)),
         col = myGrey, border = NA)
 lines(ef2$b,ef2$fit, col='black', lwd=2)
-title(xlab = expression(paste(Delta, ' Benthic Cover')), cex.lab = 1.5, line = 4)
-title(xlab = 'Producers - Invertebrates', cex.lab = 1.5, line = 2.5)
+title(xlab = 'Producer Dominance', cex.lab = 2, line = 2.5)
+title(xlab = '% Producers - % Consumers', cex.lab = 2, line = 4)
+
 
 dev.off()
 
 
 ### Community and PCA plot ###
-## Figure 4 ###
+## Figure 2 ###
 pdf(file = '../Output/CommunityFig.pdf', width = 13, height = 13, useDingbats=FALSE)
 
 #colors for sites
@@ -1300,38 +1331,4 @@ r.squaredGLMM(NCPModel)
 #
 
 dev.off()
-
-## community versus the max difference between tide pools and the ocean for supplement
-#community versus range
-pdf(file = '../Output/MaxDiff.pdf', height = 7.5, width = 7, useDingbats=FALSE)
-
-par(mar=c(5.1,7.1,4.1,2.1))
-y<- pHmetrics$maxdiffpH[!is.na(PData$slopes.TADIC)] #remove the missing data
-x<- CoverbyGroups$FleshyAlgae[!is.na(PData$slopes.TADIC)]+CoverbyGroups$SurfGrass[!is.na(PData$slopes.TADIC)] - 
-  CoverbyGroups$Inverts[!is.na(PData$slopes.TADIC)]
-
-plot(x,y, pch=19, xlab='', cex=1.5, cex.axis=1.5, cex.lab=1.5,
-     xlim=c(min(x, na.rm=T),max(x, na.rm=T)), col="grey", ylab = 'Max (Tide Pool - Ocean pH)')
-
-
-#axis(side=2, labels = FALSE) #add back tick marks
-abline(v=0, lty=2)
-abline(h=0, lty=2)
-
-model3<-lme(maxdiffpH~b, random = ~1|Site, data=NewD, na.action = na.exclude)
-
-# calculate 95% CI for the interaction terms
-ef<-effect(term = "b", mod = model3, xlevels = list(b = seq(min(NewD$b),max(NewD$b),.1)))
-ef2<-as.data.frame(ef)
-
-polygon(c(ef2$b, rev(ef2$b)),
-        c(ef2$upper, rev(ef2$lower)),
-        col = myGrey, border = NA)
-lines(ef2$b,ef2$fit, col='black', lwd=2)
-
-title(xlab = 'Producer Dominance', cex.lab = 1.5, line = 2.5)
-title(xlab = '% Producers - % Consumers', cex.lab = 1.5, line = 4)
-dev.off()
-
-#chemistry ranges by day and night
 
