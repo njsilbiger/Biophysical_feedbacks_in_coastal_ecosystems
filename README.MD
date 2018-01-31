@@ -7,9 +7,9 @@ This repository includes data  for the above manuscript
 
 **Funding:** UC-Irvine Single & Multi-investigator Research Projects Seed Fund Award, the UCI Oceans Initiative, GoWesty, and crowd sourcing. 
  
-**Journal:**  
+**Journal:**  Scientific Reports
    
-**Link:**  
+**Link:**  https://www.nature.com/articles/s41598-017-18736-6
 
 **Contents:** There are three folders and a README.md file.
 
